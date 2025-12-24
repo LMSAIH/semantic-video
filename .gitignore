@@ -1,0 +1,11 @@
+.env
+
+*example.ts
+package-lock.json
+node_modules/
+build/
+
+// Ignore image and video files
+*.webp
+*.jpg
+*.mp4
