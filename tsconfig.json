@@ -1,0 +1,18 @@
+{
+    "exclude": ["node_modules", "build"],
+    "compilerOptions": {
+        "lib": ["ES2020"],
+        "module": "esnext",
+        "target": "es2020",
+        "moduleResolution": "bundler",
+        "outDir": "./build",
+        "strict": true,
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "skipLibCheck": true,
+        "declaration": true,
+        "declarationMap": true,
+        "resolveJsonModule": true
+    },
+    "include": ["index.ts"]
+}
