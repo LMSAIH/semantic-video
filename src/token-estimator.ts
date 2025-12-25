@@ -3,20 +3,25 @@ import path from "path";
 import ffmpeg from "fluent-ffmpeg";
 import { estimateFramesTokens, type TokenEstimate } from "./token-estimate";
 import {DEFAULT_MODEL, DEFAULT_PROMPT} from "./constants";
+import { getLogger } from "./logger";
+import Table from 'cli-table3';
+import { getModelPricing } from "./models";
 
-type VideoTokenEstimate = {
+export type VideoTokenEstimate = {
   videoPath: string;
   numPartitions: number;
   perFrame: TokenEstimate;
   total: TokenEstimate;
+  model: string;
 }
 
-type MultiVideoTokenEstimate = {
+export type MultiVideoTokenEstimate = {
   videos: VideoTokenEstimate[];
   grandTotal: {
     totalTokens: number;
     estimatedCost: number;
   };
+  elapsedTime?: number;
 }
 
 /**
@@ -87,6 +92,7 @@ class TokenEstimator {
         numPartitions,
         perFrame: estimate.perFrame,
         total: estimate.total,
+        model,
       };
     } catch (error) {
       // Clean up on error
@@ -115,12 +121,14 @@ class TokenEstimator {
     }>
   ): Promise<MultiVideoTokenEstimate> {
 
+    const startTime = Date.now();
     const videoEstimates: VideoTokenEstimate[] = [];
     let totalTokens = 0;
     let totalCost = 0;
 
     for (const config of videoConfigs) {
       try {
+
         const estimate = await this.estimateVideo(
           config.videoPath,
           config.numPartitions || 10,
@@ -134,19 +142,104 @@ class TokenEstimator {
         totalTokens += estimate.total.totalTokens;
         totalCost += estimate.total.estimatedCost;
       } catch (error) {
-        console.warn(`Warning: Could not estimate for ${config.videoPath}: ${error}`);
+        const logger = getLogger();
+        logger.warn(`Could not estimate for ${config.videoPath}: ${error}`);
       }
     }
 
-    return {
+    const elapsedTime = Date.now() - startTime;
+    
+    const result = {
       videos: videoEstimates,
       grandTotal: {
         totalTokens,
         estimatedCost: totalCost,
       },
+      elapsedTime,
     };
+
+    // Auto-display if logger is enabled and showEstimateTables is true
+    const logger = getLogger();
+    if (logger.shouldShowEstimateTables()) {
+      this.displayEstimate(result);
+    }
+
+    return result;
+  }
+
+  /**
+   * Displays token estimate in a formatted table
+   * @param estimate - Single video estimate or multi-video estimate
+   */
+  displayEstimate(estimate: VideoTokenEstimate | MultiVideoTokenEstimate): void {
+    console.log('');
+    console.log('═'.repeat(70));
+    console.log('[ESTIMATE] TOKEN & COST ESTIMATION');
+    console.log('═'.repeat(70));
+
+    const table = new Table({
+      head: ['File', 'Frames', 'Model', 'Tokens/Frame', 'Total Tokens', 'Est. Cost', 'Input $/M', 'Output $/M'],
+      style: { head: [], border: [] }
+    });
+
+    // Normalize to array format
+    const videos = 'videos' in estimate ? estimate.videos : [estimate];
+    const grandTotal = 'grandTotal' in estimate ? estimate.grandTotal : {
+      totalTokens: estimate.total.totalTokens,
+      estimatedCost: estimate.total.estimatedCost
+    };
+    const elapsedTime = 'elapsedTime' in estimate ? estimate.elapsedTime : undefined;
+
+    // Add each video row
+    videos.forEach(video => {
+      const videoName = video.videoPath.split(/[/\\]/).pop() || video.videoPath;
+      const model = video.model; 
+      
+      let inputPrice = 0.15;
+      let outputPrice = 0.6;
+      try {
+        const pricing = getModelPricing(model);
+        inputPrice = pricing.inputCostPerMillion;
+        outputPrice = pricing.outputCostPerMillion;
+      } catch {}
+
+      table.push([
+        videoName,
+        video.numPartitions,
+        model,
+        video.perFrame.totalTokens.toLocaleString(),
+        video.total.totalTokens.toLocaleString(),
+        `$${video.total.estimatedCost.toFixed(6)}`,
+        `$${inputPrice.toFixed(2)}`,
+        `$${outputPrice.toFixed(2)}`
+      ]);
+    });
+
+    // Add totals row if multiple videos
+    if (videos.length > 1) {
+      table.push([
+        `TOTAL (${videos.length} videos)`,
+        '-',
+        '-',
+        '-',
+        grandTotal.totalTokens.toLocaleString(),
+        `$${grandTotal.estimatedCost.toFixed(6)}`,
+        '-',
+        '-'
+      ]);
+    }
+
+    console.log(table.toString());
+    
+    // Show elapsed time if available
+    if (elapsedTime !== undefined) {
+      const seconds = (elapsedTime / 1000).toFixed(2);
+      console.log(`Estimation Time: ${seconds}s`);
+    }
+    
+    console.log('═'.repeat(70));
+    console.log('');
   }
 }
 
 export default TokenEstimator;
-export type { VideoTokenEstimate, MultiVideoTokenEstimate };
