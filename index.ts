@@ -18,11 +18,14 @@ export {
 
 // Core classes
 export { default as SemanticVideo, type FrameData } from './src/semantic-video';
-export { default as SemanticVideoClient, type VideoAnalysisResult, type VideoTokenEstimate, type MultiVideoTokenEstimate } from './src/client';
+export { default as SemanticVideoClient, type VideoAnalysisResult, type LoggerOptions } from './src/client';
 export { default } from './src/client';
+
+// Logger
+export { getLogger, configureLogger, default as Logger } from "./src/logger";
 
 // Utility modules (for advanced usage)
 export { default as VideoRegistry } from './src/video-registry';
 export { default as StatsTracker, type ClientStats } from './src/stats-tracker';
-export { default as TokenEstimator } from './src/token-estimator';
+export { default as TokenEstimator, type VideoTokenEstimate, type MultiVideoTokenEstimate } from './src/token-estimator';
 export { default as VideoSearch, type SearchResult } from './src/video-search';
