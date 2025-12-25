@@ -5,6 +5,7 @@ import path from "path";
 import { promisify } from "util";
 import OpenAI from "openai";
 import { DEFAULT_MODEL } from "./constants";
+import { getLogger } from "./logger";
 
 const mkdir = promisify(fs.mkdir);
 const unlink = promisify(fs.unlink);
@@ -88,7 +89,8 @@ class SemanticVideo {
     }
 
     const scaleInfo = scale === -1 ? 'original resolution' : `${scale}p`;
-    console.log(`Extracting ${numPartitions} frames at ${scaleInfo} (quality: ${quality})...`);
+    const logger = getLogger();
+    logger.logFrameExtraction(numPartitions, quality, scaleInfo);
 
     // Extract each frame at its specific timestamp (parallel processing)
     const extractionPromises = timestamps.map((timestamp, index) => {
@@ -98,7 +100,6 @@ class SemanticVideo {
     try {
       // Wait for all frames to be extracted
       const base64Frames = await Promise.all(extractionPromises);
-      console.log(`Extracted ${base64Frames.length} frames`);
       return base64Frames;
     } catch (error) {
       throw new Error(`Failed to extract frames: ${error instanceof Error ? error.message : String(error)}`);
@@ -180,7 +181,8 @@ class SemanticVideo {
         return framePath;
       });
 
-      console.log(`Analyzing frames with AI`);
+      const logger = getLogger();
+      logger.logAIAnalysis(base64Frames.length, model);
       const { descriptions, totalInputTokens, totalOutputTokens } = await analyzeFrames(tempFramePaths, this.apiKey, prompt, this.openaiClient, model);
 
       // Store tokens and model used
@@ -199,9 +201,6 @@ class SemanticVideo {
       // Clean up temporary files immediately after analysis
       await this.cleanup();
 
-      console.log(
-        `✓ Analysis complete! Analyzed ${this.frames.length} frames.`
-      );
       return this.frames;
     } catch (error) {
       // Clean up on error too
