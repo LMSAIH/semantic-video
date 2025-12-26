@@ -33,19 +33,19 @@ class SemanticVideo {
    * Creates a SemanticVideo instance
    * @param videoPath - Path to the local video file
    * @param apiKey - OpenAI API key for frame analysis
-   * @param openaiClient - Pre-initialized OpenAI client (optional, will create one if not provided)
+   * @param openaiClient - Pre-initialized OpenAI client
    */
-  constructor(videoPath: string, apiKey: string, openaiClient?: OpenAI) {
+  constructor(videoPath: string, apiKey: string, openaiClient: OpenAI) {
     if (!fs.existsSync(videoPath)) {
       throw new Error(`Video file not found: ${videoPath}`);
     }
-    if (!apiKey && !openaiClient) {
-      throw new Error("API key or OpenAI client is required");
+    if (!openaiClient) {
+      throw new Error("OpenAI client is required");
     }
 
     this.videoPath = videoPath;
     this.apiKey = apiKey;
-    this.openaiClient = openaiClient || new OpenAI({ apiKey });
+    this.openaiClient = openaiClient;
   }
 
   /**
