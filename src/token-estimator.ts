@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import ffmpeg from "fluent-ffmpeg";
 import { estimateFramesTokens, type TokenEstimate } from "./token-estimate";
-import {DEFAULT_MODEL, DEFAULT_PROMPT} from "./constants";
+import {DEFAULT_MODEL, DEFAULT_PROMPT, DEFAULT_SCALE} from "./constants";
 import { getLogger } from "./logger";
 import Table from 'cli-table3';
 import { getModelPricing } from "./models";
@@ -44,7 +44,7 @@ class TokenEstimator {
     prompt: string = DEFAULT_PROMPT,
     model: string = DEFAULT_MODEL,
     quality: number = 10,
-    scale: number = 720
+    scale: number = DEFAULT_SCALE
   ): Promise<VideoTokenEstimate> {
     
     if (!fs.existsSync(videoPath)) {
@@ -135,7 +135,7 @@ class TokenEstimator {
           config.prompt || DEFAULT_PROMPT,
           config.model || DEFAULT_MODEL,
           config.quality || 10,
-          config.scale || 720
+          config.scale || DEFAULT_SCALE
         );
 
         videoEstimates.push(estimate);
