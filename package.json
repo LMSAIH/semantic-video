@@ -1,7 +1,7 @@
 {
   "name": "semantic-video",
   "private": false,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Intelligent video analysis powered by OpenAI Vision API. Extract frames, analyze content, search videos semantically, and estimate token costs with FFmpeg and GPT-4/GPT-5 models.",
   "keywords": [
     "video-analysis",
