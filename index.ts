@@ -21,6 +21,9 @@ export { default as SemanticVideo, type FrameData } from './src/semantic-video';
 export { default as SemanticVideoClient, type VideoAnalysisResult, type LoggerOptions } from './src/client';
 export { default } from './src/client';
 
+// Constants
+export { DEFAULT_MODEL, DEFAULT_PROMPT, DEFAULT_SCALE } from './src/constants';
+
 // Logger
 export { getLogger, configureLogger, default as Logger } from "./src/logger";
 
