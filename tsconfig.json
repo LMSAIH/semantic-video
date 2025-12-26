@@ -1,5 +1,5 @@
 {
-    "exclude": ["node_modules", "build"],
+    "exclude": ["node_modules", "test", "**/*.test.ts", "**/*.spec.ts"],
     "compilerOptions": {
         "lib": ["ES2020"],
         "module": "esnext",
@@ -14,5 +14,5 @@
         "declarationMap": true,
         "resolveJsonModule": true
     },
-    "include": ["index.ts"]
+    "include": ["src/**/*"]
 }
