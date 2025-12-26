@@ -116,18 +116,21 @@ class Logger {
     this.totalCost = 0;
     this.batchResults = [];
 
-    console.log('');
-    this.logger.info('═'.repeat(70));
-    this.logger.info('[START] VIDEO ANALYSIS BATCH');
-    this.logger.info('═'.repeat(70));
-    
-    const table = new Table({
-      head: ['Total Videos', 'Status'],
-      style: { head: [], border: [] }
-    });
-    table.push([videoCount, 'Initializing']);
-    console.log(table.toString());
-    console.log('');
+    // Only show init for normal and verbose
+    if (this.options.level !== 'minimal') {
+      console.log('');
+      this.logger.info('═'.repeat(70));
+      this.logger.info('[START] VIDEO ANALYSIS BATCH');
+      this.logger.info('═'.repeat(70));
+      
+      const table = new Table({
+        head: ['Total Videos', 'Status'],
+        style: { head: [], border: [] }
+      });
+      table.push([videoCount, 'Initializing']);
+      console.log(table.toString());
+      console.log('');
+    }
   }
 
   updateVideo(
@@ -216,9 +219,10 @@ class Logger {
 
     if (this.options.level === 'verbose') {
       this.logger.info(`[SUCCESS] ${videoName} completed (${this.completedVideos}/${this.totalVideos})`);
+      this.logger.info(`  └─ Duration: ${this.formatDuration(duration)} | Frames: ${frames} | Tokens: ${totalTokens.toLocaleString()} | Cost: $${cost.toFixed(6)}`);
     }
     
-    if (this.options.showProgress) {
+    if (this.options.showProgress && this.options.level !== 'minimal') {
       const overallProgress = (this.completedVideos / this.totalVideos) * 100;
       console.log('');
       this.logger.info(`Overall Progress: ${this.drawProgressBar(overallProgress)}`);
@@ -236,24 +240,27 @@ class Logger {
 
     this.completedVideos++;
 
-    console.log('');
-    this.logger.info('─'.repeat(70));
-    this.logger.info(`[FAILED] VIDEO ${this.completedVideos}/${this.totalVideos} FAILED`);
-    this.logger.info('─'.repeat(70));
-    
-    const table = new Table({
-      head: ['File', 'Duration', 'Error'],
-      style: { head: [], border: [] }
-    });
-    table.push([videoName, this.formatDuration(duration), errorMsg]);
-    console.log(table.toString());
-    
-    if (this.options.showProgress) {
-      const overallProgress = (this.completedVideos / this.totalVideos) * 100;
-      this.logger.info(`Overall Progress: ${this.drawProgressBar(overallProgress)}`);
+    // Only show detailed failure info for normal and verbose
+    if (this.options.level !== 'minimal') {
+      console.log('');
+      this.logger.info('─'.repeat(70));
+      this.logger.info(`[FAILED] VIDEO ${this.completedVideos}/${this.totalVideos} FAILED`);
+      this.logger.info('─'.repeat(70));
+      
+      const table = new Table({
+        head: ['File', 'Duration', 'Error'],
+        style: { head: [], border: [] }
+      });
+      table.push([videoName, this.formatDuration(duration), errorMsg]);
+      console.log(table.toString());
+      
+      if (this.options.showProgress) {
+        const overallProgress = (this.completedVideos / this.totalVideos) * 100;
+        this.logger.info(`Overall Progress: ${this.drawProgressBar(overallProgress)}`);
+      }
+      
+      console.log('');
     }
-    
-    console.log('');
   }
 
   completeBatch(totalDuration: number, successful: number, failed: number): void {
@@ -308,7 +315,7 @@ class Logger {
   }
 
   startSingleVideo(videoPath: string): void {
-    if (!this.options.enabled) return;
+    if (!this.options.enabled || this.options.level === 'minimal') return;
     
     const videoName = videoPath.split(/[/\\]/).pop() || videoPath;
     
@@ -332,7 +339,7 @@ class Logger {
   }
 
   logAIAnalysis(numFrames: number, model: string): void {
-    if (!this.options.enabled || this.options.level === 'minimal') return;
+    if (!this.options.enabled || this.options.level === 'minimal') return;  
     this.logger.info(`[ANALYSIS] Analyzing ${numFrames} frames with ${model}...`);
   }
 
