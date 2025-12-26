@@ -4,7 +4,7 @@ import fs from "fs";
 import path from "path";
 import { promisify } from "util";
 import OpenAI from "openai";
-import { DEFAULT_MODEL } from "./constants";
+import { DEFAULT_MODEL, DEFAULT_SCALE } from "./constants";
 import { getLogger } from "./logger";
 
 const mkdir = promisify(fs.mkdir);
@@ -72,7 +72,7 @@ class SemanticVideo {
    * @param scale - Height in pixels for output frames (default: 720). Use -1 to keep original resolution.
    * @returns Promise that resolves with an array of base64 encoded frames
    */
-  private async extractFrames(numPartitions: number, quality: number = 10, scale: number = 720): Promise<string[]> {
+  private async extractFrames(numPartitions: number, quality: number = 10, scale: number = DEFAULT_SCALE): Promise<string[]> {
     // Create temporary directory for frames
     const tempDir = path.join(process.cwd(), ".semantic-video-frames-temp");
     this.framesDir = tempDir;
@@ -120,7 +120,7 @@ class SemanticVideo {
     index: number,
     tempDir: string,
     quality: number = 10,
-    scale: number = 720
+    scale: number = DEFAULT_SCALE
   ): Promise<string> {
     const outputPath = path.join(tempDir, `frame_${String(index + 1).padStart(4, '0')}.jpg`);
 
@@ -164,7 +164,7 @@ class SemanticVideo {
     numPartitions: number = 10,
     prompt?: string,
     quality: number = 10,
-    scale: number = 720,
+    scale: number = DEFAULT_SCALE,
     model: string = DEFAULT_MODEL
   ): Promise<FrameData[]> {
     try {

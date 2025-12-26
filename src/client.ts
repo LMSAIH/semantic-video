@@ -4,7 +4,7 @@ import VideoRegistry from "./video-registry";
 import StatsTracker, { ClientStats } from "./stats-tracker";
 import TokenEstimator, { type VideoTokenEstimate, type MultiVideoTokenEstimate } from "./token-estimator";
 import VideoSearch, { SearchResult } from "./video-search";
-import { DEFAULT_MODEL, DEFAULT_PROMPT } from "./constants";
+import { DEFAULT_MODEL, DEFAULT_PROMPT, DEFAULT_SCALE } from "./constants";
 import { getLogger, LoggerOptions } from "./logger"
 
 interface VideoAnalysisResult {
@@ -58,6 +58,7 @@ class SemanticVideoClient {
    * @param numPartitions - Number of frames to extract
    * @param prompt - Optional custom prompt
    * @param quality - JPEG quality (2-31, lower is better quality but uses more tokens. Default: 10)
+   * @param scale - Height in pixels for output frames (default: 720). Use -1 to keep original resolution.
    * @param model - Model to use for analysis (default: gpt-5-nano)
    * @returns Promise that resolves with the analyzed frames
    */
@@ -66,10 +67,11 @@ class SemanticVideoClient {
     numPartitions: number = 10,
     prompt?: string,
     quality: number = 10,
+    scale: number = DEFAULT_SCALE,
     model: string = DEFAULT_MODEL
   ): Promise<FrameData[]> {
     const video = this.registry.getOrCreate(videoPath);
-    return await video.analyze(numPartitions, prompt, quality, 720, model);
+    return await video.analyze(numPartitions, prompt, quality, scale, model);
   }
 
   /**
@@ -83,6 +85,7 @@ class SemanticVideoClient {
       numPartitions?: number;
       prompt?: string;
       quality?: number;
+      scale?: number;
       model?: string;
     }>
   ): Promise<VideoAnalysisResult[]> {
@@ -106,7 +109,7 @@ class SemanticVideoClient {
             config.numPartitions || 10,
             config.prompt,
             config.quality || 10,
-            720,
+            config.scale || DEFAULT_SCALE,
             config.model || DEFAULT_MODEL
           );
 
