@@ -264,15 +264,15 @@ await client.analyzeVideo('video2.mp4', 15, undefined, 20);
 
 // Get comprehensive statistics
 const stats = client.getStats();
-console.log(`Videos analyzed: ${stats.videosAnalyzed}`);
+console.log(`Videos analyzed: ${stats.totalVideos}`);
 console.log(`Total frames: ${stats.totalFrames}`);
-console.log(`Input tokens: ${stats.totalInputTokens}`);
-console.log(`Output tokens: ${stats.totalOutputTokens}`);
-console.log(`Total cost: $${stats.totalCost.toFixed(4)}`);
-console.log(`Model usage:`, stats.modelUsage);
+console.log(`Total tokens used: ${stats.totalTokensUsed}`);
+console.log(`Total cost: $${stats.totalCostIncurred.toFixed(4)}`);
+console.log(`Avg tokens/video: ${stats.averageTokensPerVideo.toFixed(0)}`);
+console.log(`Avg tokens/frame: ${stats.averageTokensPerFrame.toFixed(0)}`);
 ```
 
-## Complete API Reference
+## API Reference
 
 ### SemanticVideoClient
 
@@ -392,7 +392,7 @@ console.log(`Per frame: ${estimate.perFrame.totalTokens} tokens`);
 
 #### searchAllVideos()
 ```typescript
-searchAllVideos(keyword: string, topK?: number): SearchResult[]
+searchAllVideos(keyword: string): SearchResult[]
 ```
 
 **Returns:** Array of matches sorted by relevance with:
@@ -402,7 +402,7 @@ searchAllVideos(keyword: string, topK?: number): SearchResult[]
 
 **Example:**
 ```typescript
-const results = client.searchAllVideos('sunset beach', 10);
+const results = client.searchAllVideos('sunset beach');
 results.forEach(r => {
   console.log(`${r.videoPath} (${r.score.toFixed(2)}): ${r.frame.description}`);
 });
@@ -414,12 +414,15 @@ getStats(): ClientStats
 ```
 
 **Returns:**
-- `videosAnalyzed`: Total videos processed
+- `totalVideos`: Total videos processed
 - `totalFrames`: Total frames analyzed
-- `totalInputTokens`: Total input tokens used
-- `totalOutputTokens`: Total output tokens used
-- `totalCost`: Total cost in USD
-- `modelUsage`: Per-model breakdown
+- `totalDuration`: Total video duration analyzed
+- `averageFramesPerVideo`: Average frames per video
+- `totalTokensUsed`: Total tokens used
+- `totalCostIncurred`: Total cost in USD
+- `totalApiCalls`: Total API calls made
+- `averageTokensPerVideo`: Average tokens per video
+- `averageTokensPerFrame`: Average tokens per frame
 
 ## Supported Models
 
