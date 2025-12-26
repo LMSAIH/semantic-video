@@ -1,0 +1,6 @@
+test/
+*.test.ts
+*.spec.ts
+tsconfig.json
+.env
+jest.config.js
