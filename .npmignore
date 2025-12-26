@@ -1,6 +1,62 @@
+# Source files (only ship compiled build/)
+src/
+*.ts
+!build/**/*.d.ts
+
+# Tests
 test/
 *.test.ts
 *.spec.ts
-tsconfig.json
-.env
 jest.config.js
+coverage/
+
+# Examples and demos
+*example.ts
+example.ts
+client-example.ts
+client-logging-example.ts
+client-token-example.ts
+readme-examples.ts
+samples/
+
+# Build configuration
+tsconfig.json
+.vscode/
+.idea/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Media files (test assets)
+*.webp
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.mp4
+*.mov
+*.avi
+*.mkv
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Misc
+*.log
+.DS_Store
+Thumbs.db

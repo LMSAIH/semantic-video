@@ -9,3 +9,5 @@ build/
 *.webp
 *.jpg
 *.mp4
+
+readme-examples.ts
