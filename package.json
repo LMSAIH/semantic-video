@@ -2,20 +2,49 @@
   "name": "semantic-video",
   "private": false,
   "version": "1.0.0",
-  "description": "",
+  "description": "Intelligent video analysis powered by OpenAI Vision API. Extract frames, analyze content, search videos semantically, and estimate token costs with FFmpeg and GPT-4/GPT-5 models.",
+  "keywords": [
+    "video-analysis",
+    "openai-vision",
+    "gpt-4-vision",
+    "gpt-5",
+    "ffmpeg",
+    "frame-extraction",
+    "video-processing",
+    "ai-video",
+    "content-analysis",
+    "video-search",
+    "video-indexing",
+    "computer-vision",
+    "video-ai",
+    "token-estimation",
+    "video-moderation",
+    "semantic-search",
+    "typescript",
+    "nodejs"
+  ],
   "license": "ISC",
-  "author": "",
+  "author": "LMSAIH",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LMSAIH/semantic-video.git"
+  },
+  "bugs": {
+    "url": "https://github.com/LMSAIH/semantic-video/issues"
+  },
+  "homepage": "https://github.com/LMSAIH/semantic-video#readme",
   "type": "module",
   "main": "build/index.js",
   "types": "build/index.d.ts",
+  "engines": {
+    "node": ">=16.0.0"
+  },
   "files": [
     "build",
     "README.md"
   ],
   "scripts": {
     "build": "npx tsc",
-    "build:example": "npx tsc && npx tsx client-token-example.ts",
-    "example": "npx tsx client-token-example.ts",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"
