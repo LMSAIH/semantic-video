@@ -166,60 +166,6 @@ video.saveFrame(5, 'frame-5.jpg');
 await video.cleanup();
 ```
 
-## API Reference
-
-### SemanticVideoClient
-
-```typescript
-new SemanticVideoClient(
-  apiKey: string,
-  loggerOptions?: {
-    enabled?: boolean;
-    level?: 'minimal' | 'normal' | 'verbose';
-    showProgress?: boolean;
-    showTimestamps?: boolean;
-    showEstimateTables?: boolean;
-  },
-  maxConcurrency?: number  // Default: 3
-)
-```
-
-**Logger Levels:**
-- `minimal`: Summary table only
-- `normal`: Progress bars, estimates table, batch summaries (shows token breakdowns)
-- `verbose`: Detailed per-video stats, extraction info, timings
-
-### Methods
-
-**analyzeVideo(videoPath, numPartitions?, prompt?, quality?, scale?, model?): Promise<FrameData[]>**
-
-Defaults: numPartitions=10, quality=10, scale=720, model='gpt-5-nano'
-
-Returns: `{ frameNumber, timestamp, description, imageData }[]`
-
-**analyzeMultipleVideos(configs): Promise<VideoAnalysisResult[]>**
-
-Config: `{ videoPath, numPartitions?, prompt?, quality?, scale?, model? }[]`
-
-Returns: `{ videoPath, video, frames, error? }[]`
-
-**estimateVideoTokens(videoPath, numPartitions, prompt?, model?, quality?, scale?): Promise<VideoTokenEstimate>**
-
-Returns: `{ videoPath, numPartitions, perFrame, total, model }`
-- `perFrame/total`: `{ textTokens, imageTokens, totalTokens, estimatedCost, model }`
-
-**estimateMultipleVideosTokens(configs): Promise<MultiVideoTokenEstimate>**
-
-Returns: `{ videos: VideoTokenEstimate[], grandTotal: { totalTokens, estimatedCost }, elapsedTime? }`
-
-**searchAllVideos(keyword): SearchResult[]**
-
-Returns: `{ videoPath, frames: FrameData[] }[]`
-
-**getStats(): ClientStats**
-
-Returns: `{ totalVideos, totalFrames, totalDuration, averageFramesPerVideo, totalTokensUsed, totalCostIncurred, totalApiCalls, averageTokensPerVideo, averageTokensPerFrame }`
-
 ## Supported Models
 
 Pricing: input/output per 1M tokens
