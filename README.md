@@ -2,6 +2,10 @@
 
 Intelligent video analysis using OpenAI vision models. Extract frames, generate descriptions, and search video content with natural language.
 
+
+https://github.com/user-attachments/assets/c813edec-72f4-486e-b3c2-b4fa975ba844
+
+
 ## Overview
 
 Semantic Video provides concurrent video processing with AI-powered frame analysis:
@@ -236,5 +240,6 @@ Quality parameter affects token usage and file size:
 - [FFmpeg Documentation](https://ffmpeg.org/documentation.html)
 
 ## License
+
 
 ISC
