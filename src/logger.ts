@@ -5,7 +5,7 @@
 
 import winston from 'winston';
 import Table from 'cli-table3';
-import { getModelPricing } from './models';
+import { getModelPricing } from './models.js';
 
 export interface LoggerOptions {
   enabled?: boolean;

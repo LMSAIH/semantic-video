@@ -1,11 +1,11 @@
-import { analyzeFrames } from "./frame-analyzers";
+import { analyzeFrames } from "./frame-analyzers.js";
 import ffmpeg from "fluent-ffmpeg";
 import fs from "fs";
 import path from "path";
 import { promisify } from "util";
 import OpenAI from "openai";
-import { DEFAULT_MODEL, DEFAULT_SCALE } from "./constants";
-import { getLogger } from "./logger";
+import { DEFAULT_MODEL, DEFAULT_SCALE } from "./constants.js";
+import { getLogger } from "./logger.js";
 
 const mkdir = promisify(fs.mkdir);
 const unlink = promisify(fs.unlink);

@@ -1,4 +1,4 @@
-import SemanticVideo, { FrameData } from "./semantic-video";
+import SemanticVideo, { FrameData } from "./semantic-video.js";
 
 interface SearchResult {
   videoPath: string;

@@ -1,11 +1,11 @@
-import SemanticVideo, { FrameData } from "./semantic-video";
+import SemanticVideo, { FrameData } from "./semantic-video.js";
 import OpenAI from "openai";
-import VideoRegistry from "./video-registry";
-import StatsTracker, { ClientStats } from "./stats-tracker";
-import TokenEstimator, { type VideoTokenEstimate, type MultiVideoTokenEstimate } from "./token-estimator";
-import VideoSearch, { SearchResult } from "./video-search";
-import { DEFAULT_MODEL, DEFAULT_PROMPT, DEFAULT_SCALE } from "./constants";
-import { getLogger, LoggerOptions } from "./logger"
+import VideoRegistry from "./video-registry.js";
+import StatsTracker, { ClientStats } from "./stats-tracker.js";
+import TokenEstimator, { type VideoTokenEstimate, type MultiVideoTokenEstimate } from "./token-estimator.js";
+import VideoSearch, { SearchResult } from "./video-search.js";
+import { DEFAULT_MODEL, DEFAULT_PROMPT, DEFAULT_SCALE } from "./constants.js";
+import { getLogger, LoggerOptions } from "./logger.js"
 
 interface VideoAnalysisResult {
   videoPath: string;

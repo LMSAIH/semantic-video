@@ -1,7 +1,7 @@
 import { encoding_for_model, TiktokenModel } from "tiktoken";
 import sharp from "sharp";
-import { DEFAULT_MODEL } from "./constants";
-import { getImageTokenMultiplier, calculateCost } from "./models";
+import { DEFAULT_MODEL } from "./constants.js";
+import { getImageTokenMultiplier, calculateCost } from "./models.js";
 
 interface TokenEstimate {
   textTokens: number;

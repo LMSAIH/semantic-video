@@ -1,6 +1,6 @@
-import SemanticVideo from "./semantic-video";
-import { calculateCost } from "./models";
-import { DEFAULT_MODEL } from "./constants";
+import SemanticVideo from "./semantic-video.js";
+import { calculateCost } from "./models.js";
+import { DEFAULT_MODEL } from "./constants.js";
 
 type ClientStats = {
   totalVideos: number;

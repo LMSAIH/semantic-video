@@ -1,11 +1,11 @@
 import fs from "fs";
 import path from "path";
 import ffmpeg from "fluent-ffmpeg";
-import { estimateFramesTokens, type TokenEstimate } from "./token-estimate";
-import {DEFAULT_MODEL, DEFAULT_PROMPT, DEFAULT_SCALE} from "./constants";
-import { getLogger } from "./logger";
+import { estimateFramesTokens, type TokenEstimate } from "./token-estimate.js";
+import {DEFAULT_MODEL, DEFAULT_PROMPT, DEFAULT_SCALE} from "./constants.js";
+import { getLogger } from "./logger.js";
 import Table from 'cli-table3';
-import { getModelPricing } from "./models";
+import { getModelPricing } from "./models.js";
 
 export type VideoTokenEstimate = {
   videoPath: string;

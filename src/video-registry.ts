@@ -1,4 +1,4 @@
-import SemanticVideo from "./semantic-video";
+import SemanticVideo from "./semantic-video.js";
 import OpenAI from "openai";
 
 /**

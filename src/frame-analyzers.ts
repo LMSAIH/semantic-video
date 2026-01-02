@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import fs from "fs";
 import path from "path";
-import {DEFAULT_PROMPT, DEFAULT_MODEL} from "./constants";
+import {DEFAULT_PROMPT, DEFAULT_MODEL} from "./constants.js";
 
 /**
  * Analyzes an image using OpenAI's vision model
