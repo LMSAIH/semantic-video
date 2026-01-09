@@ -2,16 +2,22 @@ import SemanticVideo, { FrameData } from "./semantic-video.js";
 import OpenAI from "openai";
 import VideoRegistry from "./video-registry.js";
 import StatsTracker, { ClientStats } from "./stats-tracker.js";
-import TokenEstimator, { type VideoTokenEstimate, type MultiVideoTokenEstimate } from "./token-estimator.js";
+import TokenEstimator, {
+  type VideoTokenEstimate,
+  type MultiVideoTokenEstimate,
+} from "./token-estimator.js";
 import VideoSearch, { SearchResult } from "./video-search.js";
 import { DEFAULT_MODEL, DEFAULT_PROMPT, DEFAULT_SCALE } from "./constants.js";
-import { getLogger, LoggerOptions } from "./logger.js"
+import { getLogger, LoggerOptions } from "./logger.js";
 
 interface VideoAnalysisResult {
-  videoPath: string;
-  video: SemanticVideo;
-  frames: FrameData[];
+  inputTokensUsed: number;
+  outputTokensUsed: number;
+  modelUsed: string;
+  videoDuration: number;
   error?: string;
+  frames: FrameData[];
+  videoPath: string;
 }
 
 class SemanticVideoClient {
@@ -22,14 +28,21 @@ class SemanticVideoClient {
   private estimator: TokenEstimator;
   private search: VideoSearch;
   private maxConcurrency: number;
+  private maxFrameConcurrency: number;
 
   /**
    * Creates a SemanticVideoClient instance
    * @param apiKey - OpenAI API key for frame analysis
    * @param loggerOptions - Optional logger configuration
    * @param maxConcurrency - Maximum number of videos to process concurrently (default: 3)
+   * @param maxFrameConcurrency - Maximum number of frames to analyze concurrently per video (default: 5)
    */
-  constructor(apiKey: string, loggerOptions?: LoggerOptions, maxConcurrency: number = 3) {
+  constructor(
+    apiKey: string,
+    loggerOptions?: LoggerOptions,
+    maxConcurrency: number = 3,
+    maxFrameConcurrency: number = 5
+  ) {
     if (!apiKey) {
       throw new Error("API key is required");
     }
@@ -40,8 +53,10 @@ class SemanticVideoClient {
     this.estimator = new TokenEstimator();
     this.search = new VideoSearch();
     this.maxConcurrency = Math.max(1, maxConcurrency);
+    this.maxFrameConcurrency = Math.max(1, maxFrameConcurrency);
     // Initialize logger with options
-    getLogger(loggerOptions);  }
+    getLogger(loggerOptions);
+  }
 
   /**
    * Creates and registers a new SemanticVideo instance
@@ -71,7 +86,7 @@ class SemanticVideoClient {
     model: string = DEFAULT_MODEL
   ): Promise<FrameData[]> {
     const video = this.registry.getOrCreate(videoPath);
-    return await video.analyze(numPartitions, prompt, quality, scale, model);
+    return await video.analyze(numPartitions, prompt, quality, scale, model, this.maxFrameConcurrency);
   }
 
   /**
@@ -93,58 +108,81 @@ class SemanticVideoClient {
     logger.initBatch(videoConfigs.length);
     const startTime = Date.now();
 
-    // Process videos in batches to control concurrency
+    const processVideo = async (config: typeof videoConfigs[0]): Promise<VideoAnalysisResult> => {
+      try {
+        logger.updateVideo(config.videoPath, "processing", "Starting analysis", 0);
+
+        const video = this.registry.getOrCreate(config.videoPath);
+        const frames = await video.analyze(
+          config.numPartitions || 10,
+          config.prompt,
+          config.quality || 10,
+          config.scale || DEFAULT_SCALE,
+          config.model || DEFAULT_MODEL,
+          this.maxFrameConcurrency
+        );
+
+        const { inputTokens, outputTokens, model } = video.getTokensUsed();
+        logger.completeVideo(config.videoPath, frames.length, inputTokens, outputTokens, model);
+
+        return {
+          inputTokensUsed: inputTokens,
+          outputTokensUsed: outputTokens,
+          modelUsed: model,
+          videoDuration: video.getDuration(),
+          frames,
+          videoPath: config.videoPath,
+        };
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        logger.failVideo(config.videoPath, errorMsg);
+
+        const video = this.registry.get(config.videoPath);
+        const { inputTokens, outputTokens, model } = video?.getTokensUsed() || {
+          inputTokens: 0,
+          outputTokens: 0,
+          model: DEFAULT_MODEL,
+        };
+
+        return {
+          inputTokensUsed: inputTokens,
+          outputTokensUsed: outputTokens,
+          modelUsed: model,
+          videoDuration: video?.getDuration() || 0,
+          error: errorMsg,
+          frames: [],
+          videoPath: config.videoPath,
+        };
+      }
+    };
+
+    // Process videos with dynamic concurrency - as one finishes, start the next
     const results: VideoAnalysisResult[] = [];
-    
-    for (let i = 0; i < videoConfigs.length; i += this.maxConcurrency) {
-      const batch = videoConfigs.slice(i, i + this.maxConcurrency);
-      
-      const batchPromises = batch.map(async (config) => {
-        try {
-          logger.updateVideo(config.videoPath, 'processing', 'Starting analysis', 0);
+    const executing: Set<Promise<void>> = new Set();
 
-          const video = this.registry.getOrCreate(config.videoPath);
-
-          const frames = await video.analyze(
-            config.numPartitions || 10,
-            config.prompt,
-            config.quality || 10,
-            config.scale || DEFAULT_SCALE,
-            config.model || DEFAULT_MODEL
+    for (const config of videoConfigs) {
+      const promise = processVideo(config).then((result) => {
+        results.push(result);
+        if (!result.error) {
+          this.stats.recordAnalysis(
+            result.inputTokensUsed,
+            result.outputTokensUsed,
+            result.frames.length,
+            result.modelUsed
           );
-
-          const { inputTokens, outputTokens, model } = video.getTokensUsed();
-          logger.completeVideo(config.videoPath, frames.length, inputTokens, outputTokens, model);
-          
-          return {
-            videoPath: config.videoPath,
-            video,
-            frames,
-          };
-        } catch (error) {
-          const errorMsg = error instanceof Error ? error.message : String(error);
-          logger.failVideo(config.videoPath, errorMsg);
-          
-          return {
-            videoPath: config.videoPath,
-            video: this.registry.get(config.videoPath)!,
-            frames: [],
-            error: errorMsg,
-          };
         }
+      }).finally(() => {
+        executing.delete(promise);
       });
 
-      const batchResults = await Promise.all(batchPromises);
-      results.push(...batchResults);
+      executing.add(promise);
+
+      if (executing.size >= this.maxConcurrency) {
+        await Promise.race(executing);
+      }
     }
 
-    // Track tokens from all videos
-    results.forEach((result) => {
-      if (!result.error && result.video) {
-        const { inputTokens, outputTokens, model } = result.video.getTokensUsed();
-        this.stats.recordAnalysis(inputTokens, outputTokens, result.frames.length, model);
-      }
-    });
+    await Promise.all(Array.from(executing));
 
     const totalDuration = Date.now() - startTime;
     const successful = results.filter((r) => !r.error).length;
@@ -227,7 +265,14 @@ class SemanticVideoClient {
     quality: number = 10,
     scale: number = 720
   ): Promise<VideoTokenEstimate> {
-    return this.estimator.estimateVideo(videoPath, numPartitions, prompt, model, quality, scale);
+    return this.estimator.estimateVideo(
+      videoPath,
+      numPartitions,
+      prompt,
+      model,
+      quality,
+      scale
+    );
   }
 
   /**
@@ -258,4 +303,9 @@ class SemanticVideoClient {
 }
 
 export default SemanticVideoClient;
-export type { VideoAnalysisResult, VideoTokenEstimate, MultiVideoTokenEstimate, LoggerOptions };
+export type {
+  VideoAnalysisResult,
+  VideoTokenEstimate,
+  MultiVideoTokenEstimate,
+  LoggerOptions,
+};

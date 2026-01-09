@@ -75,6 +75,8 @@ async function analyzeFrame(
  * @param apiKey - OpenAI API key
  * @param prompt - Prompt/question about each image
  * @param client - Optional pre-initialized OpenAI client for better performance
+ * @param model - Model to use for analysis
+ * @param maxConcurrency - Maximum number of frames to analyze concurrently (default: 5)
  * @returns Object with array of descriptions and total tokens used
  */
 async function analyzeFrames(
@@ -82,7 +84,8 @@ async function analyzeFrames(
   apiKey: string,
   prompt: string = DEFAULT_PROMPT,
   client?: OpenAI,
-  model: string = DEFAULT_MODEL, 
+  model: string = DEFAULT_MODEL,
+  maxConcurrency: number = 5
 ): Promise<{ descriptions: string[]; totalInputTokens: number; totalOutputTokens: number }> {
   try {
     if (!apiKey && !client) {
@@ -92,7 +95,7 @@ async function analyzeFrames(
     // Use provided client or create a new one
     const openaiClient = client || new OpenAI({ apiKey });
 
-    const promises = imagePaths.map(async (imagePath, index) => {
+    const processFrame = async (imagePath: string, index: number) => {
       try {
         if (!fs.existsSync(imagePath)) {
           throw new Error(`File not found - ${imagePath}`);
@@ -105,18 +108,39 @@ async function analyzeFrames(
           openaiClient,
           model
         );
-        return result;
+        return { index, result };
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
         throw new Error(`Frame ${index + 1} failed: ${errorMsg}`);
       }
-    });
+    };
 
-    const results = await Promise.all(promises);
+    // Process frames with dynamic concurrency
+    const results: Array<{ index: number; result: { content: string; inputTokens: number; outputTokens: number } }> = [];
+    const executing: Set<Promise<void>> = new Set();
 
-    const descriptions = results.map((r) => r.content);
-    const totalInputTokens = results.reduce((sum, r) => sum + r.inputTokens, 0);
-    const totalOutputTokens = results.reduce((sum, r) => sum + r.outputTokens, 0);
+    for (let i = 0; i < imagePaths.length; i++) {
+      const promise = processFrame(imagePaths[i], i).then((res) => {
+        results.push(res);
+      }).finally(() => {
+        executing.delete(promise);
+      });
+
+      executing.add(promise);
+
+      if (executing.size >= maxConcurrency) {
+        await Promise.race(executing);
+      }
+    }
+
+    await Promise.all(executing);
+
+    // Sort results by index to maintain order
+    results.sort((a, b) => a.index - b.index);
+
+    const descriptions = results.map((r) => r.result.content);
+    const totalInputTokens = results.reduce((sum, r) => sum + r.result.inputTokens, 0);
+    const totalOutputTokens = results.reduce((sum, r) => sum + r.result.outputTokens, 0);
 
     return { descriptions, totalInputTokens, totalOutputTokens };
   } catch (error) {

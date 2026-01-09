@@ -73,8 +73,10 @@ class SemanticVideo {
    * @returns Promise that resolves with an array of base64 encoded frames
    */
   private async extractFrames(numPartitions: number, quality: number = 10, scale: number = DEFAULT_SCALE): Promise<string[]> {
-    // Create temporary directory for frames
-    const tempDir = path.join(process.cwd(), ".semantic-video-frames-temp");
+    // Create unique temporary directory for this video to avoid conflicts during concurrent processing
+    const videoBaseName = path.basename(this.videoPath, path.extname(this.videoPath));
+    const uniqueId = Date.now() + '-' + Math.random().toString(36).substring(7);
+    const tempDir = path.join(process.cwd(), ".semantic-video-frames-temp", `${videoBaseName}-${uniqueId}`);
     this.framesDir = tempDir;
 
     if (!fs.existsSync(tempDir)) {
@@ -158,6 +160,8 @@ class SemanticVideo {
    * @param prompt - Optional custom prompt for frame analysis
    * @param quality - JPEG quality (2-31, lower is better quality but uses more tokens. Default: 10 for balanced quality/cost)
    * @param scale - Height in pixels for output frames (default: 720). Use -1 to keep original resolution.
+   * @param model - Model to use for analysis
+   * @param maxFrameConcurrency - Maximum number of frames to analyze concurrently (default: 5)
    * @returns Promise that resolves when analysis is complete
    */
   async analyze(
@@ -165,7 +169,8 @@ class SemanticVideo {
     prompt?: string,
     quality: number = 10,
     scale: number = DEFAULT_SCALE,
-    model: string = DEFAULT_MODEL
+    model: string = DEFAULT_MODEL,
+    maxFrameConcurrency: number = 5
   ): Promise<FrameData[]> {
     try {
 
@@ -183,7 +188,7 @@ class SemanticVideo {
 
       const logger = getLogger();
       logger.logAIAnalysis(base64Frames.length, model);
-      const { descriptions, totalInputTokens, totalOutputTokens } = await analyzeFrames(tempFramePaths, this.apiKey, prompt, this.openaiClient, model);
+      const { descriptions, totalInputTokens, totalOutputTokens } = await analyzeFrames(tempFramePaths, this.apiKey, prompt, this.openaiClient, model, maxFrameConcurrency);
 
       // Store tokens and model used
       this.inputTokensUsed = totalInputTokens;
