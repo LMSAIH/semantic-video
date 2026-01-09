@@ -91,7 +91,7 @@ Enable logger to see detailed breakdowns of estimates, usage, and costs. Process
 const client = new SemanticVideoClient(apiKey, {
   enabled: true,
   level: 'normal'    // Shows progress, estimates table, and summaries
-}, 3);  // Process up to 3 videos concurrently
+}, 3, 5);  // Process up to 3 videos concurrently, 5 frames per video
 
 const estimate = await client.estimateMultipleVideosTokens([
   { videoPath: 'video1.mp4', numPartitions: 10 },
@@ -195,6 +195,24 @@ Pricing: input/output per 1M tokens
 - `o1`: $15.00/$60.00
 
 ## Configuration
+
+### Concurrency Control
+
+Control processing speed and API throughput with two levels of concurrency:
+
+```typescript
+const client = new SemanticVideoClient(
+  apiKey,
+  loggerOptions,
+  3,  // maxConcurrency: Process 3 videos simultaneously
+  5   // maxFrameConcurrency: Analyze 5 frames per video concurrently
+);
+```
+
+- **Video-level concurrency** (`maxConcurrency`): Number of videos processed simultaneously (default: 3)
+- **Frame-level concurrency** (`maxFrameConcurrency`): Number of frames analyzed concurrently per video (default: 5)
+- Higher values = faster processing but higher API rate usage
+- Adjust based on your OpenAI API rate limits and tier
 
 ### Quality vs Cost
 
